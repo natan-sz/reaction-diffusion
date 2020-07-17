@@ -11,7 +11,6 @@ DA = 1.0
 DB = 0.5
 feed = 0.055
 k = 0.062
-dt = 0.1
 
 fig = plt.figure()
 ax1 = fig.add_subplot(1, 1, 1)
@@ -47,21 +46,25 @@ def laplacian(M, N):
 
 
 # Update A & B
-def update(A, B, DA, DB, feed, k, dt, N):
-    diff_A = (DA * laplacian(A, N)) - (A * B ** 2) + (feed * (1 - A))
-    A += diff_A
+def update(A, B, DA, DB, feed, k, N):
 
-    diff_B = (DB * laplacian(B, N)) + (A * B ** 2) - ((k + feed) * B)
+    LA = laplacian(A, N)
+    LB = laplacian(B, N)
+
+    diff_A = ((DA * LA) - (A * B ** 2) + (feed * (1 - A))) * 0.1
+    diff_B = ((DB * LB) + (A * B ** 2) - ((k + feed) * B)) * 0.1
+
+    A += diff_A
     B += diff_B
 
     return A, B
 
 
 def animate(i):
-    update(A, B, DA, DB, feed, k, dt, N)
+    update(A, B, DA, DB, feed, k, N)
     ax1.clear()
     ax1.imshow(A)
 
 
 ani = animation.FuncAnimation(fig, animate, interval=1000)
-plt.show()
+plt.show(
