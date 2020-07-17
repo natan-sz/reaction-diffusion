@@ -3,18 +3,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.animation as animation
 
 # Set Constants
-N = 10
+N = 100
 DA = 1.0
 DB = 0.5
 feed = 0.055
 k = 0.062
-dt = 1
+dt = 0.1
+
+fig = plt.figure()
+ax1 = fig.add_subplot(1, 1, 1)
 
 # Initialise Chemical A & B
 A = np.ones((N, N))
 B = np.zeros((N, N))
+
+B = 0.2 * np.random.random((N, N))
 
 # Now let's add a disturbance in the center
 N2 = N // 2
@@ -24,40 +30,38 @@ A[N2 - r : N2 + r, N2 - r : N2 + r] = 0.50
 B[N2 - r : N2 + r, N2 - r : N2 + r] = 0.25
 
 # Find Laplacian
-def laplacian(M, i, j):
-    L = 0
-    L += M[i, j] * -1
-    L += M[i - 1, j] * 0.2
-    L += M[i + 1, j] * 0.2
-    L += M[i, j - 1] * 0.2
-    L += M[i, j + 1] * 0.2
-    L += M[i - 1, j - 1] * 0.05
-    L += M[i + 1, j + 1] * 0.05
-    L += M[i + 1, j - 1] * 0.05
-    L += M[i - 1, j + 1] * 0.05
+def laplacian(M, N):
+    L = np.zeros((N, N))
+    for i in range(N)[1:-1]:
+        for j in range(N)[1:-1]:
+            L[i, j] += M[i, j] * -1  # Center Pixel
+            L[i - 1, j] += M[i - 1, j] * 0.2  # Left Pixel
+            L[i + 1, j] += M[i + 1, j] * 0.2  # Right Pixel
+            L[i, j - 1] += M[i, j - 1] * 0.2  # Bottom Pixel
+            L[i, j + 1] += M[i, j + 1] * 0.2  # Top Pixel
+            L[i - 1, j - 1] += M[i - 1, j - 1] * 0.05  # Bottom Left
+            L[i + 1, j + 1] += M[i + 1, j + 1] * 0.05  # Top Right
+            L[i + 1, j - 1] += M[i + 1, j - 1] * 0.05  # Bottom Right
+            L[i - 1, j + 1] += M[i - 1, j + 1] * 0.05  # Top Left
     return L
 
 
 # Update A & B
-def update(A, B, DA, DB, feed, k, dt):
-    for i in range(A.ndim):
-        for j in range(A.ndim):
-            diff_A = (
-                (DA * laplacian(A, i, j))
-                - (A[i, j] * B[i, j] ** 2)
-                + (feed * (1 - A[i, j]))
-            ) * dt
-            A[i, j] += diff_A
+def update(A, B, DA, DB, feed, k, dt, N):
+    diff_A = (DA * laplacian(A, N)) - (A * B ** 2) + (feed * (1 - A))
+    A += diff_A
 
-            diff_B = (
-                (DB * laplacian(B, i, j))
-                + (A[i, j] * B[i, j] ** 2)
-                - ((k + feed) * B[i, j])
-            ) * dt
-            B[i, j] += diff_B
+    diff_B = (DB * laplacian(B, N)) + (A * B ** 2) - ((k + feed) * B)
+    B += diff_B
+
+    return A, B
 
 
-while True:
-    update(A, B, DA, DB, feed, k, dt)
-    plt.imshow(A)
-    plt.show()
+def animate(i):
+    update(A, B, DA, DB, feed, k, dt, N)
+    ax1.clear()
+    ax1.imshow(A)
+
+
+ani = animation.FuncAnimation(fig, animate, interval=1000)
+plt.show()
