@@ -7,7 +7,7 @@ import matplotlib.animation as animation
 from scipy import signal
 
 # Set Constants
-N = 200
+N = 500
 DA = 1.0
 DB = 0.5
 feed = 0.055
@@ -83,7 +83,7 @@ def update(A, B, DA, DB, feed, k, N, kernel):
 # plt.show()
 
 # No live preview (only last frame)
-iter = 10000
+iter = 50000
 
 for i in range(iter):
     update(A, B, DA, DB, feed, k, N, kernel)
@@ -91,4 +91,5 @@ for i in range(iter):
 
 print("Done!")
 plt.imshow(A)
+plt.savefig("reaction.png", dpi=300)
 plt.show()
